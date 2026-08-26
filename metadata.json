@@ -1,0 +1,6 @@
+{
+  "name": "Academic Outreach Tracker",
+  "description": "A streamlined faculty outreach management dashboard for tracking university professor contacts, 7-day follow-up reminders, email interaction logs, and response rates with Supabase sync.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
