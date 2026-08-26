@@ -105,17 +105,18 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {isOpen && (
         <div 
           onClick={onClose || onToggle}
-          className="fixed inset-0 bg-slate-900/50 backdrop-blur-2xs z-40 lg:hidden transition-opacity"
+          className="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 lg:hidden transition-opacity"
           aria-hidden="true"
         />
       )}
 
       {/* Main Drawer Container: Slide-in Drawer on Mobile / Fixed Side Column on Desktop */}
       <aside 
+        id="filters-drawer"
         className={`
           fixed lg:static top-0 bottom-0 left-0 z-50 lg:z-10
-          w-72 sm:w-80 lg:w-68 bg-white border-r border-slate-200 p-4 sm:p-5 
-          flex flex-col shrink-0 overflow-y-auto select-none h-full shadow-xl lg:shadow-none
+          w-80 sm:w-84 lg:w-68 bg-white border-r border-slate-200 p-4 sm:p-5 
+          flex flex-col shrink-0 overflow-y-auto select-none h-full shadow-2xl lg:shadow-none
           transition-transform duration-300 ease-in-out
           ${isOpen ? 'translate-x-0' : '-translate-x-full lg:hidden'}
         `}

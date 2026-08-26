@@ -31,7 +31,7 @@ export default function App() {
       const saved = localStorage.getItem(STORAGE_KEY_LEADS);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+        if (Array.isArray(parsed) && parsed.length >= INITIAL_PROFESSORS_DATA.length) return parsed;
       }
     } catch (e) {
       console.warn('LocalStorage lead cache read error:', e);

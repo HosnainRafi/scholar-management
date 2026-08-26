@@ -76,7 +76,7 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
         </div>
 
         <div className="p-6 space-y-4 text-xs">
-          {/* Dropzone */}
+          {/* Dropzone & Quick Presets */}
           <div className="p-6 border-2 border-dashed border-slate-300 hover:border-indigo-500 rounded-xl text-center bg-slate-50/50 transition-colors">
             <input
               type="file"
@@ -97,6 +97,25 @@ export const CsvImportModal: React.FC<CsvImportModalProps> = ({
                 Supports university outreach datasets with names, emails, research areas
               </p>
             </label>
+          </div>
+
+          <div className="flex items-center justify-between p-3 bg-slate-50 border border-slate-200 rounded-lg">
+            <div>
+              <p className="font-semibold text-slate-800">Built-in Default Dataset</p>
+              <p className="text-[11px] text-slate-500">Load or restore the default Japanese faculty dataset</p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const defaultLeads = parseProfessorsCsv();
+                setParsedPreview(defaultLeads);
+                setFileName('default_professors_dataset.csv');
+                setErrorMsg('');
+              }}
+              className="px-3 py-1.5 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 rounded-lg text-xs font-semibold transition-colors"
+            >
+              Load Default Data
+            </button>
           </div>
 
           {fileName && (

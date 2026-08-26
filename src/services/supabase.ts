@@ -27,9 +27,9 @@ try {
 export const supabase = client;
 
 
-export const STORAGE_KEY_LEADS = 'academic_outreach_leads_v2';
-export const STORAGE_KEY_TEMPLATES = 'academic_outreach_templates_v2';
-export const STORAGE_KEY_CONFIG = 'academic_outreach_config_v2';
+export const STORAGE_KEY_LEADS = 'academic_outreach_leads_v4';
+export const STORAGE_KEY_TEMPLATES = 'academic_outreach_templates_v4';
+export const STORAGE_KEY_CONFIG = 'academic_outreach_config_v4';
 
 export interface SupabaseSyncResult {
   success: boolean;
@@ -139,6 +139,20 @@ export async function loadLeadsFromSupabaseOrLocal(defaultLeads: ProfessorLead[]
         updatedAt: row.updated_at || new Date().toISOString(),
       }));
 
+      // If remote has fewer leads than the default dataset, merge them to include new defaults
+      if (parsedRemote.length < defaultLeads.length) {
+        const remoteMap = new Map(parsedRemote.map(p => [p.id, p]));
+        const merged = defaultLeads.map(d => remoteMap.get(d.id) || d);
+        for (const p of parsedRemote) {
+          if (!defaultLeads.some(d => d.id === p.id)) {
+            merged.push(p);
+          }
+        }
+        // Save the merged data locally so the user can sync to cloud
+        localStorage.setItem(STORAGE_KEY_LEADS, JSON.stringify(merged));
+        return merged;
+      }
+
       // Cache locally
       localStorage.setItem(STORAGE_KEY_LEADS, JSON.stringify(parsedRemote));
       return parsedRemote;
@@ -152,8 +166,20 @@ export async function loadLeadsFromSupabaseOrLocal(defaultLeads: ProfessorLead[]
   if (cached) {
     try {
       const parsed = JSON.parse(cached);
-      if (Array.isArray(parsed) && parsed.length > 0) {
+      if (Array.isArray(parsed) && parsed.length >= defaultLeads.length) {
         return parsed;
+      } else if (Array.isArray(parsed) && parsed.length > 0) {
+        // Merge user edits with default dataset
+        const cachedMap = new Map(parsed.map(p => [p.id, p]));
+        const merged = defaultLeads.map(d => cachedMap.get(d.id) || d);
+        // add any custom added leads
+        for (const p of parsed) {
+          if (!defaultLeads.some(d => d.id === p.id)) {
+            merged.push(p);
+          }
+        }
+        localStorage.setItem(STORAGE_KEY_LEADS, JSON.stringify(merged));
+        return merged;
       }
     } catch {
       // ignore

@@ -31,19 +31,22 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Primary Top Bar */}
       <div className="h-14 sm:h-16 flex items-center justify-between px-3 sm:px-6 lg:px-8">
         <div className="flex items-center space-x-2 sm:space-x-3 min-w-0">
-          {/* Mobile Drawer / Sidebar Toggle Button */}
+          {/* Mobile Drawer / Sidebar Toggle Button (Also appears on desktop when sidebar is collapsed) */}
           {onToggleSidebar && (
             <button
+              id="sidebar-toggle-button"
+              type="button"
               onClick={onToggleSidebar}
-              className={`p-2 rounded-lg border transition-colors flex items-center justify-center shrink-0 ${
+              className={`px-2.5 py-1.5 rounded-lg border transition-colors flex items-center space-x-1.5 shrink-0 text-xs font-semibold ${
                 isSidebarOpen
-                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700'
-                  : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                  ? 'bg-indigo-50 border-indigo-200 text-indigo-700 lg:hidden'
+                  : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100 flex'
               }`}
               title={isSidebarOpen ? "Close filters drawer" : "Open filters & datasets drawer"}
               aria-label="Toggle filters drawer"
             >
-              <SlidersHorizontal className="w-4 h-4" />
+              <SlidersHorizontal className="w-4 h-4 text-indigo-600" />
+              <span className="hidden sm:inline">Filters</span>
             </button>
           )}
 
