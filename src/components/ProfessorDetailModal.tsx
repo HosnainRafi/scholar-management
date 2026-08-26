@@ -77,38 +77,38 @@ export const ProfessorDetailModal: React.FC<ProfessorDetailModalProps> = ({
   const reminder = calculateReminderInfo(lead);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/40 backdrop-blur-xs">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-3xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/80 shrink-0">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm">
+        <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/80 shrink-0">
+          <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-xs sm:text-sm shrink-0">
               {lead.name.slice(0, 2).toUpperCase()}
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="font-bold text-slate-900 text-base">{lead.name}</h3>
-                <span className="text-xs px-2 py-0.5 bg-indigo-50 text-indigo-700 font-medium rounded border border-indigo-100">
+            <div className="min-w-0">
+              <div className="flex items-center space-x-1.5 sm:space-x-2 flex-wrap gap-y-1">
+                <h3 className="font-bold text-slate-900 text-sm sm:text-base truncate">{lead.name}</h3>
+                <span className="text-[10px] sm:text-xs px-1.5 py-0.5 bg-indigo-50 text-indigo-700 font-medium rounded border border-indigo-100">
                   {lead.rank}
                 </span>
-                <span className={`text-xs px-2 py-0.5 rounded font-bold uppercase ${reminder.badgeClass}`}>
+                <span className={`text-[10px] sm:text-xs px-1.5 py-0.5 rounded font-bold uppercase ${reminder.badgeClass}`}>
                   {reminder.label}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">{lead.university} • {lead.department}</p>
+              <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 truncate">{lead.university} • {lead.department}</p>
             </div>
           </div>
 
-          <div className="flex items-center space-x-2">
+          <div className="flex items-center space-x-1.5 sm:space-x-2 shrink-0">
             <button
               onClick={() => {
                 onClose();
                 onOpenEmailModal(lead);
               }}
-              className="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition-colors shadow-2xs"
+              className="px-2.5 py-1.5 sm:px-3 sm:py-1.5 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-semibold flex items-center space-x-1 sm:space-x-1.5 transition-colors shadow-2xs"
             >
               <Mail className="w-3.5 h-3.5" />
-              <span>Compose Email</span>
+              <span className="hidden xs:inline">Email</span>
             </button>
             <button
               onClick={onClose}
@@ -120,7 +120,7 @@ export const ProfessorDetailModal: React.FC<ProfessorDetailModalProps> = ({
         </div>
 
         {/* Content */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-5 text-xs text-slate-700">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-5 text-xs text-slate-700">
           {/* Research Interest Highlighting */}
           <div className="p-4 bg-slate-50 rounded-xl border border-slate-200">
             <h4 className="text-[11px] font-bold text-slate-400 uppercase tracking-wider mb-1.5 flex items-center space-x-1.5">

@@ -41,21 +41,37 @@ export interface SupabaseSyncResult {
 /**
  * Check if connection to Supabase is active
  */
-export async function checkSupabaseConnection(): Promise<{ connected: boolean; message: string }> {
+export async function checkSupabaseConnection(): Promise<{ connected: boolean; tableExists: boolean; message: string }> {
   try {
-    const { error } = await supabase.from('leads').select('count', { count: 'exact', head: true });
+    const { error } = await supabase.from('leads').select('id', { count: 'exact', head: true });
     if (error) {
-      if (error.code === 'PGRST116' || error.message.includes('relation "public.leads" does not exist') || error.code === '42P01') {
+      // 404 or relation does not exist
+      if (
+        error.code === 'PGRST116' || 
+        error.code === 'PGRST204' || 
+        error.code === '42P01' || 
+        error.message?.includes('relation "public.leads" does not exist') ||
+        error.message?.includes('404')
+      ) {
         return { 
-          connected: true, 
-          message: 'Connected to Supabase (Table `leads` can be created automatically or use local cache sync).' 
+          connected: true,
+          tableExists: false,
+          message: 'Supabase connected! The `leads` table does not exist in your database yet. Run the SQL Schema in your Supabase SQL Editor to enable cloud sync.' 
         };
       }
-      return { connected: true, message: `Connected to Supabase project (${SUPABASE_URL.split('//')[1].split('.')[0]})` };
+      return { 
+        connected: true, 
+        tableExists: false, 
+        message: `Connected to Supabase project (${SUPABASE_URL.split('//')[1]?.split('.')[0] || 'endpoint'})` 
+      };
     }
-    return { connected: true, message: 'Connected & synced with Supabase `leads` table.' };
+    return { 
+      connected: true, 
+      tableExists: true, 
+      message: 'Connected & synced with Supabase `leads` table.' 
+    };
   } catch (err: any) {
-    return { connected: false, message: err?.message || 'Unable to connect to Supabase' };
+    return { connected: false, tableExists: false, message: err?.message || 'Unable to connect to Supabase' };
   }
 }
 
@@ -63,8 +79,8 @@ export async function checkSupabaseConnection(): Promise<{ connected: boolean; m
  * Fetch all leads from Supabase with fallback to localStorage
  */
 export async function loadLeadsFromSupabaseOrLocal(defaultLeads: ProfessorLead[]): Promise<ProfessorLead[]> {
+  // 1. Try fetching from Supabase table 'leads'
   try {
-    // 1. Try fetching from Supabase table 'leads'
     const { data, error } = await supabase
       .from('leads')
       .select('*')
@@ -111,8 +127,8 @@ export async function loadLeadsFromSupabaseOrLocal(defaultLeads: ProfessorLead[]
       localStorage.setItem(STORAGE_KEY_LEADS, JSON.stringify(parsedRemote));
       return parsedRemote;
     }
-  } catch (err) {
-    console.warn('Supabase fetch failed, checking localStorage cache:', err);
+  } catch {
+    // Graceful fallback to localStorage
   }
 
   // 2. Try localStorage cache

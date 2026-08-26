@@ -58,6 +58,16 @@ export default function App() {
   const [selectedRank, setSelectedRank] = useState<string>('ALL');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
+  // Layout expansion states (defaults to open on desktop, closed drawer on mobile)
+  const [isSidebarOpen, setIsSidebarOpen] = useState<boolean>(() => {
+    if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+      return false;
+    }
+    return true;
+  });
+  const [isStatsCollapsed, setIsStatsCollapsed] = useState<boolean>(false);
+  const [isFullPage, setIsFullPage] = useState<boolean>(false);
+
   // Modals
   const [selectedEmailLead, setSelectedEmailLead] = useState<ProfessorLead | null>(null);
   const [selectedDetailLead, setSelectedDetailLead] = useState<ProfessorLead | null>(null);
@@ -236,11 +246,13 @@ export default function App() {
         isSyncing={isSyncing}
         supabaseConnected={supabaseConnected}
         overdueCount={overdueCount}
+        onToggleSidebar={() => setIsSidebarOpen(prev => !prev)}
+        isSidebarOpen={isSidebarOpen && !isFullPage}
       />
 
       {/* Main Content Body */}
-      <main className="flex-1 flex overflow-hidden">
-        {/* Left Sidebar Filters */}
+      <main className="flex-1 flex overflow-hidden relative">
+        {/* Left Sidebar Filters Drawer */}
         <Sidebar
           leads={leads}
           activeFilter={activeFilter}
@@ -254,17 +266,26 @@ export default function App() {
           setSelectedRank={setSelectedRank}
           onOpenUploadModal={() => setIsCsvImportOpen(true)}
           onSelectLead={(lead) => setSelectedDetailLead(lead)}
+          isOpen={isSidebarOpen && !isFullPage}
+          onClose={() => setIsSidebarOpen(false)}
+          onToggle={() => setIsSidebarOpen(prev => !prev)}
         />
 
         {/* Center Dynamic Tab View */}
-        <div className="flex-1 flex flex-col p-6 lg:p-8 overflow-hidden">
+        <div className={`flex-1 flex flex-col overflow-hidden transition-all duration-200 ${
+          isFullPage ? 'p-2 sm:p-3' : 'p-3 sm:p-4 lg:p-5'
+        }`}>
           {activeTab === 'dashboard' || activeTab === 'tracker' ? (
             <>
-              {/* Quick Metrics Bar */}
-              <StatsBar
-                leads={leads}
-                onFilterClick={(filter) => setActiveFilter(filter)}
-              />
+              {/* Quick Metrics Bar (Collapsible to give 100% space to the table) */}
+              {!isFullPage && (
+                <StatsBar
+                  leads={leads}
+                  onFilterClick={(filter) => setActiveFilter(filter)}
+                  isCollapsed={isStatsCollapsed}
+                  onToggleCollapse={() => setIsStatsCollapsed(prev => !prev)}
+                />
+              )}
 
               {/* Interactive Professors Table */}
               <ProfessorTable
@@ -274,6 +295,27 @@ export default function App() {
                 onOpenDetailModal={(lead) => setSelectedDetailLead(lead)}
                 searchQuery={searchQuery}
                 setSearchQuery={setSearchQuery}
+                isFullPage={isFullPage}
+                onToggleFullPage={() => {
+                  setIsFullPage(prev => {
+                    const next = !prev;
+                    if (next) {
+                      setIsStatsCollapsed(true);
+                    }
+                    return next;
+                  });
+                }}
+                isSidebarOpen={isSidebarOpen && !isFullPage}
+                onToggleSidebar={() => {
+                  if (isFullPage) {
+                    setIsFullPage(false);
+                    setIsSidebarOpen(true);
+                  } else {
+                    setIsSidebarOpen(prev => !prev);
+                  }
+                }}
+                activeFilter={activeFilter}
+                onSelectFilter={(filter) => setActiveFilter(filter)}
               />
             </>
           ) : activeTab === 'templates' ? (

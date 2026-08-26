@@ -172,27 +172,27 @@ export const EmailModal: React.FC<EmailModalProps> = ({
   const reminderInfo = calculateReminderInfo(lead);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-xs">
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-2 sm:p-4 bg-slate-900/40 backdrop-blur-xs">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-4xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-150">
         {/* Header */}
-        <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70 shrink-0">
-          <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-sm shadow-xs">
+        <div className="px-4 py-3 sm:px-6 sm:py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/70 shrink-0">
+          <div className="flex items-center space-x-2.5 sm:space-x-3 min-w-0">
+            <div className="w-8 h-8 sm:w-10 sm:h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-xs sm:text-sm shadow-xs shrink-0">
               {lead.name.slice(0, 2).toUpperCase()}
             </div>
-            <div>
-              <div className="flex items-center space-x-2">
-                <h3 className="font-bold text-slate-900 text-base">
+            <div className="min-w-0">
+              <div className="flex items-center space-x-1.5 sm:space-x-2 flex-wrap gap-y-1">
+                <h3 className="font-bold text-slate-900 text-sm sm:text-base truncate">
                   {lead.name}
                 </h3>
-                <span className="text-xs px-2 py-0.5 bg-indigo-50 text-indigo-700 font-medium rounded border border-indigo-100">
+                <span className="text-[10px] sm:text-xs px-1.5 py-0.5 bg-indigo-50 text-indigo-700 font-medium rounded border border-indigo-100">
                   {lead.rank}
                 </span>
-                <span className={`text-xs px-2 py-0.5 rounded font-bold uppercase ${reminderInfo.badgeClass}`}>
+                <span className={`text-[10px] sm:text-xs px-1.5 py-0.5 rounded font-bold uppercase ${reminderInfo.badgeClass}`}>
                   {reminderInfo.label}
                 </span>
               </div>
-              <p className="text-xs text-slate-500 mt-0.5">
+              <p className="text-[11px] sm:text-xs text-slate-500 mt-0.5 truncate">
                 {lead.university} • {lead.department || 'Graduate School'}
               </p>
             </div>
@@ -200,53 +200,53 @@ export const EmailModal: React.FC<EmailModalProps> = ({
 
           <button
             onClick={onClose}
-            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-lg transition-colors"
+            className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-lg transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
         {/* Tab Switcher */}
-        <div className="px-6 border-b border-slate-200 flex space-x-6 text-xs font-semibold bg-white shrink-0">
+        <div className="px-3 sm:px-6 border-b border-slate-200 flex space-x-3 sm:space-x-6 text-xs font-semibold bg-white shrink-0 overflow-x-auto scrollbar-none whitespace-nowrap">
           <button
             onClick={() => setActiveSubTab('composer')}
-            className={`py-3 border-b-2 flex items-center space-x-2 transition-colors cursor-pointer ${
+            className={`py-3 border-b-2 flex items-center space-x-1.5 transition-colors cursor-pointer shrink-0 ${
               activeSubTab === 'composer'
                 ? 'border-indigo-600 text-indigo-600'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             <Send className="w-3.5 h-3.5" />
-            <span>Compose & Send Email</span>
+            <span>Compose & Send</span>
           </button>
 
           <button
             onClick={() => setActiveSubTab('thread')}
-            className={`py-3 border-b-2 flex items-center space-x-2 transition-colors cursor-pointer ${
+            className={`py-3 border-b-2 flex items-center space-x-1.5 transition-colors cursor-pointer shrink-0 ${
               activeSubTab === 'thread'
                 ? 'border-indigo-600 text-indigo-600'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             <MessageSquare className="w-3.5 h-3.5" />
-            <span>Interaction Thread ({lead.emailThread?.length || 0})</span>
+            <span>Thread ({lead.emailThread?.length || 0})</span>
           </button>
 
           <button
             onClick={() => setActiveSubTab('log_reply')}
-            className={`py-3 border-b-2 flex items-center space-x-2 transition-colors cursor-pointer ${
+            className={`py-3 border-b-2 flex items-center space-x-1.5 transition-colors cursor-pointer shrink-0 ${
               activeSubTab === 'log_reply'
                 ? 'border-indigo-600 text-indigo-600'
                 : 'border-transparent text-slate-500 hover:text-slate-900'
             }`}
           >
             <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
-            <span>Log Professor Reply</span>
+            <span>Log Reply</span>
           </button>
         </div>
 
         {/* Modal Body */}
-        <div className="flex-1 overflow-y-auto p-6">
+        <div className="flex-1 overflow-y-auto p-4 sm:p-6">
           {activeSubTab === 'composer' && (
             <div className="space-y-4">
               {/* Recipient & Sender metadata */}

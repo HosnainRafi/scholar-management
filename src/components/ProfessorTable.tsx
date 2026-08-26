@@ -16,10 +16,17 @@ import {
   ChevronRight,
   Sparkles,
   Phone,
-  Eye
+  Eye,
+  Maximize2,
+  Minimize2,
+  SlidersHorizontal,
+  LayoutGrid,
+  ListFilter,
+  PanelLeftClose,
+  PanelLeft
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { ProfessorLead } from '../types';
+import { ProfessorLead, ViewFilter } from '../types';
 import { calculateReminderInfo, formatTimeAgo } from '../utils/reminderUtils';
 
 interface ProfessorTableProps {
@@ -29,6 +36,12 @@ interface ProfessorTableProps {
   onOpenDetailModal: (lead: ProfessorLead) => void;
   searchQuery: string;
   setSearchQuery: (query: string) => void;
+  isFullPage?: boolean;
+  onToggleFullPage?: () => void;
+  isSidebarOpen?: boolean;
+  onToggleSidebar?: () => void;
+  activeFilter?: ViewFilter;
+  onSelectFilter?: (filter: ViewFilter) => void;
 }
 
 export const ProfessorTable: React.FC<ProfessorTableProps> = ({
@@ -38,9 +51,16 @@ export const ProfessorTable: React.FC<ProfessorTableProps> = ({
   onOpenDetailModal,
   searchQuery,
   setSearchQuery,
+  isFullPage = false,
+  onToggleFullPage,
+  isSidebarOpen = true,
+  onToggleSidebar,
+  activeFilter = 'all',
+  onSelectFilter
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
-  const [pageSize, setPageSize] = useState(15);
+  const [pageSize, setPageSize] = useState<number>(25);
+  const [density, setDensity] = useState<'compact' | 'comfortable'>('comfortable');
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   // Sorting
@@ -169,6 +189,7 @@ export const ProfessorTable: React.FC<ProfessorTableProps> = ({
   // Pagination calculation
   const totalPages = Math.max(1, Math.ceil(processedLeads.length / pageSize));
   const paginatedLeads = useMemo(() => {
+    if (pageSize >= processedLeads.length) return processedLeads;
     const start = (currentPage - 1) * pageSize;
     return processedLeads.slice(start, start + pageSize);
   }, [processedLeads, currentPage, pageSize]);
@@ -180,91 +201,214 @@ export const ProfessorTable: React.FC<ProfessorTableProps> = ({
     }
   }, [totalPages, currentPage]);
 
+  const rowPaddingClass = density === 'compact' ? 'py-1.5 px-3' : 'py-3 px-4';
+
   return (
-    <div className="flex flex-col flex-1 overflow-hidden bg-white border border-slate-200 rounded-xl shadow-xs">
-      {/* Top Search & Filter Bar */}
-      <div className="p-4 border-b border-slate-200 flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-3 bg-white shrink-0">
-        <div className="relative flex-1 max-w-md">
-          <Search className="absolute left-3.5 top-2.5 w-4 h-4 text-slate-400" />
-          <input
-            type="text"
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-            placeholder="Search leads by professor name, university, email, research topic..."
-            className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg text-xs bg-slate-50/50 hover:bg-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-800"
-          />
-          {searchQuery && (
-            <button
-              onClick={() => setSearchQuery('')}
-              className="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-600 font-bold"
-            >
-              ×
-            </button>
-          )}
-        </div>
+    <div className={`flex flex-col flex-1 bg-white border border-slate-200 rounded-xl shadow-xs transition-all ${
+      isFullPage ? 'h-full min-h-[85vh]' : 'h-full min-h-[500px]'
+    }`}>
+      {/* Top Search, Filter Pills & View Controls */}
+      <div className="p-3.5 border-b border-slate-200 flex flex-col gap-2.5 bg-white shrink-0">
+        <div className="flex flex-col lg:flex-row items-stretch lg:items-center justify-between gap-2.5">
+          {/* Left: Sidebar Toggle + Search */}
+          <div className="flex items-center space-x-2 flex-1 max-w-xl">
+            {onToggleSidebar && (
+              <button
+                onClick={onToggleSidebar}
+                className={`p-2 border rounded-lg text-xs font-medium flex items-center space-x-1.5 transition-colors shrink-0 ${
+                  isSidebarOpen 
+                    ? 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100' 
+                    : 'bg-indigo-50 border-indigo-200 text-indigo-700 hover:bg-indigo-100 font-semibold'
+                }`}
+                title={isSidebarOpen ? "Hide filters sidebar to expand table" : "Show filters sidebar"}
+              >
+                {isSidebarOpen ? <PanelLeftClose className="w-4 h-4" /> : <PanelLeft className="w-4 h-4" />}
+                <span className="hidden sm:inline">{isSidebarOpen ? 'Full Width' : 'Sidebar'}</span>
+              </button>
+            )}
 
-        {/* View Controls & Page Size */}
-        <div className="flex items-center space-x-3 text-xs text-slate-500 justify-between sm:justify-end">
-          <div className="flex items-center space-x-1.5">
-            <span>Show</span>
-            <select
-              value={pageSize}
-              onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
-              className="border border-slate-200 rounded-md p-1 bg-slate-50 focus:outline-none text-slate-700 font-medium"
-            >
-              <option value={10}>10</option>
-              <option value={15}>15</option>
-              <option value={25}>25</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-            <span>per page</span>
+            <div className="relative flex-1">
+              <Search className="absolute left-3.5 top-2.5 w-4 h-4 text-slate-400" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={e => setSearchQuery(e.target.value)}
+                placeholder="Search by professor name, university, email, research topic..."
+                className="w-full pl-10 pr-8 py-2 border border-slate-200 rounded-lg text-xs bg-slate-50/50 hover:bg-white focus:bg-white focus:outline-none focus:ring-2 focus:ring-indigo-500/20 focus:border-indigo-500 transition-all text-slate-800"
+              />
+              {searchQuery && (
+                <button
+                  onClick={() => setSearchQuery('')}
+                  className="absolute right-3 top-2.5 text-xs text-slate-400 hover:text-slate-600 font-bold"
+                >
+                  ×
+                </button>
+              )}
+            </div>
           </div>
 
-          <div className="text-slate-400 hidden md:inline">|</div>
+          {/* Right: Density, Page Size, Sort, Full Page Controls */}
+          <div className="flex items-center space-x-2 text-xs text-slate-500 justify-between lg:justify-end flex-wrap gap-y-1.5">
+            {/* Quick Sort dropdown */}
+            <div className="flex items-center space-x-1.5 font-medium">
+              <span className="text-slate-400">Sort:</span>
+              <button
+                onClick={() => {
+                  if (sortBy === 'university') setSortOrder(o => o === 'asc' ? 'desc' : 'asc');
+                  else { setSortBy('university'); setSortOrder('asc'); }
+                }}
+                className={`px-2 py-1 rounded border text-[11px] transition-colors ${
+                  sortBy === 'university' ? 'bg-indigo-50 text-indigo-700 border-indigo-200 font-semibold' : 'bg-slate-50 border-slate-200 text-slate-600'
+                }`}
+              >
+                Uni {sortBy === 'university' && (sortOrder === 'asc' ? '↑' : '↓')}
+              </button>
+              <button
+                onClick={() => {
+                  if (sortBy === 'reminder') setSortOrder(o => o === 'asc' ? 'desc' : 'asc');
+                  else { setSortBy('reminder'); setSortOrder('asc'); }
+                }}
+                className={`px-2 py-1 rounded border text-[11px] transition-colors ${
+                  sortBy === 'reminder' ? 'bg-indigo-50 text-indigo-700 border-indigo-200 font-semibold' : 'bg-slate-50 border-slate-200 text-slate-600'
+                }`}
+              >
+                Reminder {sortBy === 'reminder' && (sortOrder === 'asc' ? '↑' : '↓')}
+              </button>
+            </div>
 
-          <div className="flex items-center space-x-2 font-medium">
-            <span>Sort:</span>
-            <button
-              onClick={() => {
-                if (sortBy === 'university') setSortOrder(o => o === 'asc' ? 'desc' : 'asc');
-                else { setSortBy('university'); setSortOrder('asc'); }
-              }}
-              className={`px-2 py-1 rounded border transition-colors ${
-                sortBy === 'university' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-slate-50 border-slate-200 text-slate-600'
-              }`}
-            >
-              Uni {sortBy === 'university' && (sortOrder === 'asc' ? '↑' : '↓')}
-            </button>
-            <button
-              onClick={() => {
-                if (sortBy === 'reminder') setSortOrder(o => o === 'asc' ? 'desc' : 'asc');
-                else { setSortBy('reminder'); setSortOrder('asc'); }
-              }}
-              className={`px-2 py-1 rounded border transition-colors ${
-                sortBy === 'reminder' ? 'bg-indigo-50 text-indigo-700 border-indigo-200' : 'bg-slate-50 border-slate-200 text-slate-600'
-              }`}
-            >
-              Reminder {sortBy === 'reminder' && (sortOrder === 'asc' ? '↑' : '↓')}
-            </button>
+            <div className="text-slate-300 hidden sm:inline">|</div>
+
+            {/* Density Selector */}
+            <div className="flex items-center bg-slate-100 p-0.5 rounded-lg border border-slate-200">
+              <button
+                onClick={() => setDensity('comfortable')}
+                className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                  density === 'comfortable' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-800'
+                }`}
+                title="Spacious comfortable rows"
+              >
+                Comfort
+              </button>
+              <button
+                onClick={() => setDensity('compact')}
+                className={`px-2 py-0.5 rounded text-[11px] font-medium transition-colors ${
+                  density === 'compact' ? 'bg-white text-slate-900 shadow-2xs' : 'text-slate-500 hover:text-slate-800'
+                }`}
+                title="Compact view - see more rows without scrolling"
+              >
+                Compact
+              </button>
+            </div>
+
+            {/* Page Size */}
+            <div className="flex items-center space-x-1">
+              <select
+                value={pageSize}
+                onChange={e => { setPageSize(Number(e.target.value)); setCurrentPage(1); }}
+                className="border border-slate-200 rounded-md py-1 px-1.5 bg-slate-50 focus:outline-none text-slate-700 text-xs font-medium"
+              >
+                <option value={15}>15 rows</option>
+                <option value={25}>25 rows</option>
+                <option value={50}>50 rows</option>
+                <option value={100}>100 rows</option>
+                <option value={500}>500 rows</option>
+              </select>
+            </div>
+
+            {/* Full-Page Toggle */}
+            {onToggleFullPage && (
+              <button
+                onClick={onToggleFullPage}
+                className={`p-1.5 rounded-lg border text-xs font-semibold flex items-center space-x-1 transition-colors ${
+                  isFullPage 
+                    ? 'bg-indigo-600 border-indigo-600 text-white shadow-2xs' 
+                    : 'bg-slate-50 border-slate-200 text-slate-700 hover:bg-slate-100'
+                }`}
+                title={isFullPage ? "Exit Full Page Mode" : "Expand Table to Full Page View"}
+              >
+                {isFullPage ? <Minimize2 className="w-3.5 h-3.5" /> : <Maximize2 className="w-3.5 h-3.5" />}
+                <span className="hidden sm:inline">{isFullPage ? 'Exit Full Page' : 'Full Page'}</span>
+              </button>
+            )}
           </div>
         </div>
+
+        {/* Quick Filter Tabs for direct access without sidebar */}
+        {onSelectFilter && (
+          <div className="flex items-center space-x-1.5 overflow-x-auto pt-1 pb-0.5 text-xs text-slate-600 border-t border-slate-100">
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider mr-1 shrink-0">
+              Filter:
+            </span>
+            <button
+              onClick={() => onSelectFilter('all')}
+              className={`px-2.5 py-1 rounded-md font-medium shrink-0 transition-colors ${
+                activeFilter === 'all' ? 'bg-indigo-50 text-indigo-700 font-semibold border border-indigo-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
+              }`}
+            >
+              All Leads ({leads.length})
+            </button>
+            <button
+              onClick={() => onSelectFilter('with_email')}
+              className={`px-2.5 py-1 rounded-md font-medium shrink-0 transition-colors ${
+                activeFilter === 'with_email' ? 'bg-indigo-50 text-indigo-700 font-semibold border border-indigo-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
+              }`}
+            >
+              Direct Email ({leads.filter(l => Boolean(l.email)).length})
+            </button>
+            <button
+              onClick={() => onSelectFilter('pending_reply')}
+              className={`px-2.5 py-1 rounded-md font-medium shrink-0 transition-colors ${
+                activeFilter === 'pending_reply' ? 'bg-amber-50 text-amber-800 font-semibold border border-amber-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
+              }`}
+            >
+              Pending Reply ({leads.filter(l => l.isMailed && !l.isReplied).length})
+            </button>
+            <button
+              onClick={() => onSelectFilter('reminders_due')}
+              className={`px-2.5 py-1 rounded-md font-medium shrink-0 transition-colors ${
+                activeFilter === 'reminders_due' ? 'bg-rose-50 text-rose-700 font-semibold border border-rose-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
+              }`}
+            >
+              7-Day Overdue ({leads.filter(l => {
+                if (!l.isMailed || l.isReplied) return false;
+                const info = calculateReminderInfo(l);
+                return info.isOverdue || info.isDueToday;
+              }).length})
+            </button>
+            <button
+              onClick={() => onSelectFilter('replied')}
+              className={`px-2.5 py-1 rounded-md font-medium shrink-0 transition-colors ${
+                activeFilter === 'replied' ? 'bg-emerald-50 text-emerald-700 font-semibold border border-emerald-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
+              }`}
+            >
+              Replied ({leads.filter(l => l.isReplied).length})
+            </button>
+            <button
+              onClick={() => onSelectFilter('favorites')}
+              className={`px-2.5 py-1 rounded-md font-medium shrink-0 transition-colors ${
+                activeFilter === 'favorites' ? 'bg-amber-50 text-amber-700 font-semibold border border-amber-200' : 'bg-slate-50 hover:bg-slate-100 text-slate-600'
+              }`}
+            >
+              Starred ({leads.filter(l => (l.rating || 0) > 0).length})
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* Main Table Area */}
-      <div className="overflow-auto flex-1">
+      {/* Main Table Area - Smooth fluid scrolling with ample viewport space */}
+      <div className="overflow-auto flex-1 max-h-full">
         <table className="w-full text-left border-collapse">
-          <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 z-10">
+          <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 z-10 shadow-2xs">
             <tr className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">
-              <th className="px-4 py-3.5 w-10 text-center">★</th>
-              <th className="px-5 py-3.5 min-w-[200px]">Faculty Contact</th>
-              <th className="px-4 py-3.5 min-w-[170px]">University & Dept</th>
-              <th className="px-4 py-3.5 min-w-[220px]">Research Domain</th>
-              <th className="px-4 py-3.5 w-24 text-center">Mailed</th>
-              <th className="px-4 py-3.5 w-24 text-center">Replied</th>
-              <th className="px-4 py-3.5 min-w-[130px]">Last Activity</th>
-              <th className="px-4 py-3.5 min-w-[130px]">7-Day Reminder</th>
-              <th className="px-5 py-3.5 text-right min-w-[140px]">Outreach Actions</th>
+              <th className="px-3 py-3 w-10 text-center">★</th>
+              <th className="px-4 py-3 min-w-[200px]">Faculty Contact</th>
+              <th className="px-4 py-3 min-w-[170px]">University & Dept</th>
+              <th className="px-4 py-3 min-w-[240px]">Research Domain</th>
+              <th className="px-3 py-3 w-20 text-center">Mailed</th>
+              <th className="px-3 py-3 w-20 text-center">Replied</th>
+              <th className="px-4 py-3 min-w-[120px]">Last Activity</th>
+              <th className="px-4 py-3 min-w-[130px]">7-Day Reminder</th>
+              <th className="px-4 py-3 text-right min-w-[140px]">Outreach Actions</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 text-sm">
@@ -297,7 +441,7 @@ export const ProfessorTable: React.FC<ProfessorTableProps> = ({
                     onClick={() => onOpenDetailModal(lead)}
                   >
                     {/* Star Priority */}
-                    <td className="px-4 py-3 text-center" onClick={e => handleToggleStar(lead, e)}>
+                    <td className={`text-center ${rowPaddingClass}`} onClick={e => handleToggleStar(lead, e)}>
                       <Star
                         className={`w-4 h-4 mx-auto transition-transform active:scale-125 ${
                           lead.rating > 0
@@ -308,7 +452,7 @@ export const ProfessorTable: React.FC<ProfessorTableProps> = ({
                     </td>
 
                     {/* Faculty Contact Info */}
-                    <td className="px-5 py-3">
+                    <td className={rowPaddingClass}>
                       <div className="flex items-center space-x-2">
                         <div className="font-semibold text-slate-900 leading-tight">
                           {lead.name}
@@ -319,7 +463,7 @@ export const ProfessorTable: React.FC<ProfessorTableProps> = ({
                       </div>
 
                       {hasEmail ? (
-                        <div className="flex items-center space-x-1.5 mt-1 text-xs text-slate-500">
+                        <div className="flex items-center space-x-1.5 mt-0.5 text-xs text-slate-500">
                           <span className="text-slate-600 font-mono select-all truncate max-w-[200px]" title={lead.email}>
                             {lead.email}
                           </span>
@@ -336,8 +480,8 @@ export const ProfessorTable: React.FC<ProfessorTableProps> = ({
                           </button>
                         </div>
                       ) : (
-                        <div className="mt-1 flex items-center space-x-1 text-[11px] text-amber-700">
-                          <span className="bg-amber-50 px-1.5 py-0.5 rounded border border-amber-200">
+                        <div className="mt-0.5 flex items-center space-x-1 text-[10px] text-amber-700">
+                          <span className="bg-amber-50 px-1.5 py-0.2 rounded border border-amber-200">
                             {lead.fallbackOfficeEmail ? `Lab: ${lead.fallbackOfficeEmail}` : 'Office fallback needed'}
                           </span>
                         </div>
@@ -345,7 +489,7 @@ export const ProfessorTable: React.FC<ProfessorTableProps> = ({
                     </td>
 
                     {/* University & Department */}
-                    <td className="px-4 py-3">
+                    <td className={rowPaddingClass}>
                       <div className="font-medium text-slate-800 text-xs leading-tight">
                         {lead.university}
                       </div>
@@ -355,9 +499,9 @@ export const ProfessorTable: React.FC<ProfessorTableProps> = ({
                     </td>
 
                     {/* Research Interest Preview */}
-                    <td className="px-4 py-3">
+                    <td className={rowPaddingClass}>
                       <p 
-                        className="text-xs text-slate-600 line-clamp-2 max-w-[280px] leading-relaxed" 
+                        className="text-xs text-slate-600 line-clamp-2 max-w-[320px] leading-relaxed" 
                         title={lead.researchInterest}
                       >
                         {lead.researchInterest || 'Consult official faculty profile for detailed lab projects and topics.'}
@@ -365,7 +509,7 @@ export const ProfessorTable: React.FC<ProfessorTableProps> = ({
                     </td>
 
                     {/* Mailed Checkbox */}
-                    <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
+                    <td className={`text-center ${rowPaddingClass}`} onClick={e => e.stopPropagation()}>
                       <label className="inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
@@ -377,7 +521,7 @@ export const ProfessorTable: React.FC<ProfessorTableProps> = ({
                     </td>
 
                     {/* Replied Checkbox */}
-                    <td className="px-4 py-3 text-center" onClick={e => e.stopPropagation()}>
+                    <td className={`text-center ${rowPaddingClass}`} onClick={e => e.stopPropagation()}>
                       <label className="inline-flex items-center cursor-pointer">
                         <input
                           type="checkbox"
@@ -389,7 +533,7 @@ export const ProfessorTable: React.FC<ProfessorTableProps> = ({
                     </td>
 
                     {/* Last Activity */}
-                    <td className="px-4 py-3">
+                    <td className={rowPaddingClass}>
                       {lead.isReplied ? (
                         <div>
                           <div className="text-xs text-emerald-600 font-semibold flex items-center space-x-1">
@@ -418,7 +562,7 @@ export const ProfessorTable: React.FC<ProfessorTableProps> = ({
                     </td>
 
                     {/* 7-Day Reminder */}
-                    <td className="px-4 py-3">
+                    <td className={rowPaddingClass}>
                       {reminder.status === 'none' ? (
                         <span className="text-slate-300 text-xs">—</span>
                       ) : (
@@ -429,11 +573,11 @@ export const ProfessorTable: React.FC<ProfessorTableProps> = ({
                     </td>
 
                     {/* Actions */}
-                    <td className="px-5 py-3 text-right" onClick={e => e.stopPropagation()}>
+                    <td className={`text-right ${rowPaddingClass}`} onClick={e => e.stopPropagation()}>
                       <div className="flex items-center justify-end space-x-1.5">
                         <button
                           onClick={() => onOpenEmailModal(lead)}
-                          className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-md text-xs font-semibold flex items-center space-x-1 transition-colors"
+                          className="px-2.5 py-1 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 rounded-md text-xs font-semibold flex items-center space-x-1 transition-colors shadow-2xs"
                           title="Open Email Composer and Thread History"
                         >
                           <Mail className="w-3 h-3" />
@@ -470,7 +614,7 @@ export const ProfessorTable: React.FC<ProfessorTableProps> = ({
       </div>
 
       {/* Pagination Footer matching Clean Minimalism design */}
-      <div className="border-t border-slate-200 p-4 bg-white flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
+      <div className="border-t border-slate-200 px-4 py-3 bg-white flex flex-col sm:flex-row items-center justify-between gap-3 shrink-0">
         <div className="text-xs text-slate-500">
           Showing <strong className="text-slate-800 font-semibold">{processedLeads.length > 0 ? (currentPage - 1) * pageSize + 1 : 0}</strong> to{' '}
           <strong className="text-slate-800 font-semibold">{Math.min(currentPage * pageSize, processedLeads.length)}</strong> of{' '}
