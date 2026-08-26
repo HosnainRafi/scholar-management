@@ -79,14 +79,30 @@ export async function checkSupabaseConnection(): Promise<{ connected: boolean; t
  * Fetch all leads from Supabase with fallback to localStorage
  */
 export async function loadLeadsFromSupabaseOrLocal(defaultLeads: ProfessorLead[]): Promise<ProfessorLead[]> {
-  // 1. Try fetching from Supabase table 'leads'
+  // 1. Try fetching every row from Supabase table 'leads'.
+  // PostgREST commonly caps a single response at 1,000 rows, so page explicitly.
   try {
-    const { data, error } = await supabase
-      .from('leads')
-      .select('*')
-      .order('updated_at', { ascending: false });
+    const pageSize = 1000;
+    const allRows: any[] = [];
+    let pageStart = 0;
+    let hasMore = true;
 
-    if (!error && data && data.length > 0) {
+    while (hasMore) {
+      const { data, error } = await supabase
+        .from('leads')
+        .select('*')
+        .order('updated_at', { ascending: false })
+        .range(pageStart, pageStart + pageSize - 1);
+
+      if (error) throw error;
+      const page = data || [];
+      allRows.push(...page);
+      hasMore = page.length === pageSize;
+      pageStart += pageSize;
+    }
+
+    const data = allRows;
+    if (data.length > 0) {
       const parsedRemote: ProfessorLead[] = data.map((row: any) => ({
         id: row.id,
         university: row.university || '',
